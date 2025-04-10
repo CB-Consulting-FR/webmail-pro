@@ -13,8 +13,6 @@
         const [filter, setFilter] = useState<string>('');
         const [showDebrief, setShowDebrief] = useState(false);
         const allMailsClassified = emailsState.every((email) => !!email.priority);
-        const reset = emails.map(email => ({ ...email, priority: undefined }));
-        setEmailsState(reset);
         const resetPriorities = () => {
           setEmailsState(emails);
           setSelectedEmail(null);
