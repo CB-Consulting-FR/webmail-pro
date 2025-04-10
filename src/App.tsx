@@ -3,13 +3,18 @@
       import { saveAs } from 'file-saver';
 
       function App() {
+        const [isAuthenticated, setIsAuthenticated] = useState(false);
+        const [accessCode, setAccessCode] = useState('');
+        const [showIntro, setShowIntro] = useState(true);
         const [showAddForm, setShowAddForm] = useState(false);
         const [newMail, setNewMail] = useState({ senderName: '', subject: '', body: '' });
         const [emailsState, setEmailsState] = useState<Email[]>(emails);
         const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
         const [filter, setFilter] = useState<string>('');
         const [showDebrief, setShowDebrief] = useState(false);
-
+        const allMailsClassified = emailsState.every((email) => !!email.priority);
+        const reset = emails.map(email => ({ ...email, priority: undefined }));
+        setEmailsState(reset);
         const resetPriorities = () => {
           setEmailsState(emails);
           setSelectedEmail(null);
@@ -57,8 +62,93 @@
           const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
           saveAs(blob, "debrief-mails.csv");
         };
+        if (!isAuthenticated) {
+          return (
+            <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+              <img
+                src="/logo.png"
+                alt="Logo WebMail Pro"
+                style={{ height: 80, marginBottom: 20 }}
+              />
+              <h1>🔐 Accès à WebMail Pro</h1>
+              <p>Veuillez entrer le code fourni pour accéder à l’exercice :</p>
+
+              <input
+                type="password"
+                placeholder="Code d’accès"
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+                style={{
+                  padding: '10px',
+                  fontSize: '1em',
+                  marginTop: 10,
+                  border: '1px solid #ccc',
+                  borderRadius: 4,
+                  width: '250px'
+                }}
+              />
+              <br />
+              <button
+                style={{
+                  marginTop: 20,
+                  padding: '10px 20px',
+                  fontSize: '1em',
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  if (accessCode === 'cedric2025') {
+                    setIsAuthenticated(true);
+                  } else {
+                    alert('❌ Code incorrect. Veuillez réessayer.');
+                  }
+                }}
+              >
+                ✅ Valider
+              </button>
+            </div>
+          );
+        }
+
+        if (showIntro) {
+          return (
+            <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+              <img
+                src="/logo.png"
+                alt="Logo WebMail Pro"
+                style={{ height: 80, marginBottom: 20 }}
+              />
+              <h1>📬 Bienvenue sur WebMail Pro</h1>
+              <p style={{ fontSize: '1.2em', maxWidth: 600, margin: 'auto' }}>
+                Cet exercice vous permet de classer vos mails selon leur priorité :
+                Urgent, Important, À planifier, Pour information ou à jeter.
+              </p>
+              <p>Analysez les mails, attribuez une priorité, puis lancez le débrief final !</p>
+              <button
+                onClick={() => setShowIntro(false)}
+                style={{
+                  marginTop: 30,
+                  padding: '12px 24px',
+                  fontSize: '1.1em',
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                🚀 Démarrer l’exercice
+              </button>
+            </div>
+          );
+        }
         return (
+          
           <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif' }}>
+            
 
             {/* Barre supérieure de filtre */}
             <div style={{ background: '#e0e0e0', padding: '10px 20px', display: 'flex', gap: 10 }}>
@@ -118,7 +208,29 @@
                 📄 Exporter le débrief (.CSV)
               </button>
             </div>
-
+            {allMailsClassified && (
+              <div
+                style={{
+                  marginTop: 40,
+                  padding: '25px',
+                  backgroundColor: '#e8f5e9',
+                  border: '2px solid #4caf50',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  fontSize: '1.3em',
+                  color: '#2e7d32',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                  maxWidth: '700px',
+                  marginLeft: 'auto',
+                  marginRight: 'auto'
+                }}
+              >
+                🎉 Bravo ! Vous avez terminé le classement de tous les mails.
+                <br />
+                La gestion des priorités, c’est la clé d’un quotidien plus serein 💡
+              </div>
+            )}
             {/* Contenu principal */}
             <div style={{ flex: 1, display: 'flex' }}>
 
