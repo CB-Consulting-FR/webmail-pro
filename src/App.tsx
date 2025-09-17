@@ -25,7 +25,7 @@ function App() {
     setShowDebrief(true);
   };
 
-  const getPriorityStyle = (priority?: string) => {
+  const getPriorityStyle = (priority?: Email["priority"]) => {
     switch (priority) {
       case 'Urgent': return { backgroundColor: '#e53935', color: 'white' };
       case 'Important': return { backgroundColor: '#ff9800', color: 'white' };
@@ -36,15 +36,14 @@ function App() {
     }
   };
 
+  const filteredEmails = filter ? emailsState.filter(e => e.priority === filter) : emailsState;
+
   const exportDebriefToCSV = () => {
-    const categories = ['Urgent', 'Important', 'Planifier', 'Info', 'Trash', 'NonClassé'];
+    const categories: Email["priority"][] = ['Urgent', 'Important', 'Planifier', 'Info', 'Trash'];
     const rows = [["Priorité", "Nom de l'expéditeur", "Sujet", "Date"]];
 
     categories.forEach((priority) => {
-      const mails = emailsState.filter((mail) =>
-        priority === "NonClassé" ? !mail.priority : mail.priority === priority
-      );
-
+      const mails = emailsState.filter((mail) => mail.priority === priority);
       mails.forEach((mail) => {
         rows.push([
           priority,
@@ -55,12 +54,20 @@ function App() {
       });
     });
 
+    const nonClassés = emailsState.filter((mail) => !mail.priority);
+    nonClassés.forEach((mail) => {
+      rows.push([
+        'NonClassé',
+        mail.sender.name,
+        mail.subject,
+        new Date(mail.date).toLocaleString('fr-FR')
+      ]);
+    });
+
     const csvContent = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, "debrief-mails.csv");
   };
-
-  const filteredEmails = filter ? emailsState.filter(e => e.priority === filter) : emailsState;
 
   if (!isAuthenticated) {
     return (
@@ -68,6 +75,7 @@ function App() {
         <img src="/logo.png" alt="Logo WebMail Pro" style={{ height: 80, marginBottom: 20 }} />
         <h1>🔐 Accès à WebMail Pro</h1>
         <p>Veuillez entrer le code fourni pour accéder à l’exercice :</p>
+
         <input
           type="password"
           placeholder="Code d’accès"
@@ -112,78 +120,42 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      {/* Colonne de gauche */}
-      <div style={{ width: '40%', padding: 20, overflowY: 'auto', borderRight: '1px solid #ccc' }}>
-        <h2>📥 Boîte de réception</h2>
-        <div style={{ marginBottom: 20 }}>
-          <button onClick={resetPriorities}>♻️ Réinitialiser</button>
-          <button onClick={handleDebrief} style={{ marginLeft: 10 }}>📊 Débrief</button>
-          <button onClick={exportDebriefToCSV} style={{ marginLeft: 10 }}>📄 Export CSV</button>
+    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1>📨 WebMail Pro</h1>
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={resetPriorities}>♻️ Réinitialiser</button>
+        <button onClick={handleDebrief} style={{ marginLeft: 10 }}>📊 Débrief</button>
+        <button onClick={exportDebriefToCSV} style={{ marginLeft: 10 }}>📄 Export CSV</button>
+      </div>
+      {showDebrief && (
+        <div>
+          <h3>📊 Débrief des mails classés</h3>
+          {['Urgent', 'Important', 'Planifier', 'Info', 'Trash', 'NonClassé'].map(priority => {
+            const list = emailsState.filter(mail => priority === 'NonClassé' ? !mail.priority : mail.priority === priority);
+            return (
+              <div key={priority}>
+                <strong>{priority} : {list.length} mail(s)</strong>
+                <ul>
+                  {list.map(mail => (
+                    <li key={mail.id}>{mail.subject} — {mail.sender.name}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
-        {filteredEmails.map(email => (
-          <div
-            key={email.id}
-            onClick={() => setSelectedEmail(email)}
-            style={{
-              marginBottom: 15,
-              padding: 10,
-              borderRadius: 4,
-              cursor: 'pointer',
-              border: selectedEmail?.id === email.id ? '2px solid #1976d2' : '1px solid #ccc'
-            }}
-          >
-            <strong>{email.sender.name}</strong> - {email.subject}<br />
-            <small>{new Date(email.date).toLocaleString('fr-FR')}</small><br />
-            <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12 }}>
-              {email.priority || 'Non classé'}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Colonne de droite */}
-      <div style={{ flex: 1, padding: 20 }}>
-        {selectedEmail ? (
-          <>
-            <h2>📄 Détail du mail</h2>
-            <p><strong>Expéditeur :</strong> {selectedEmail.sender.name} ({selectedEmail.sender.email})</p>
-            <p><strong>Sujet :</strong> {selectedEmail.subject}</p>
-            <p><strong>Date :</strong> {new Date(selectedEmail.date).toLocaleString('fr-FR')}</p>
-            <p><strong>Contenu :</strong></p>
-            <div style={{ backgroundColor: '#f5f5f5', padding: 10, borderRadius: 6 }}>
-              {selectedEmail.body}
-            </div>
-            <p><strong>Priorité actuelle :</strong> {selectedEmail.priority || 'Non classé'}</p>
-            <div style={{ marginTop: 20 }}>
-              {['Urgent', 'Important', 'Planifier', 'Info', 'Trash'].map(p => (
-                <button
-                  key={p}
-                  onClick={() =>
-                    setEmailsState(prev =>
-                      prev.map(mail =>
-                        mail.id === selectedEmail.id ? { ...mail, priority: p } : mail
-                      )
-                    )
-                  }
-                  style={{
-                    ...getPriorityStyle(p),
-                    marginRight: 10,
-                    padding: '6px 12px',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p style={{ fontSize: '1.1em' }}>📩 Cliquez sur un mail à gauche pour afficher les détails.</p>
-        )}
-      </div>
+      )}
+      <hr />
+      <h2>📥 Boîte de réception</h2>
+      {filteredEmails.map(email => (
+        <div key={email.id} style={{ marginBottom: 15, border: '1px solid #ccc', padding: 10, borderRadius: 4 }}>
+          <strong>{email.sender.name}</strong> - {email.subject}<br />
+          <small>{new Date(email.date).toLocaleString('fr-FR')}</small><br />
+          <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12 }}>
+            {email.priority || 'Non classé'}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
