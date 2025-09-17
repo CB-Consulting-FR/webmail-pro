@@ -1,6 +1,7 @@
 // App.tsx
 import React, { useState } from 'react';
-import { generateEmailsWithDates, Email } from './data/rawEmails';
+import { generateEmailsWithDates } from './data/rawEmails';
+import { Email } from './data/emails';
 import { saveAs } from 'file-saver';
 
 function App() {
