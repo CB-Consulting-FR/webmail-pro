@@ -1,3 +1,5 @@
+export type Priority = "Urgent" | "Important" | "Planifier" | "Info" | "Trash";
+
 export interface Sender {
   name: string;
   email: string;
@@ -10,5 +12,5 @@ export interface Email {
   subject: string;
   body: string;
   date: string;
-  priority?: "Urgent" | "Important" | "Planifier" | "Info" | "Trash"; // optionnel
+  priority?: Priority; // ici on attend un type strict
 }
