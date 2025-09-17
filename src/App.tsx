@@ -1,3 +1,4 @@
+// App.tsx
 import React, { useState } from 'react';
 import { generateEmailsWithDates } from './data/rawEmails';
 import { Email } from './data/emails';
@@ -25,7 +26,7 @@ function App() {
     setShowDebrief(true);
   };
 
-  const getPriorityStyle = (priority?: Email["priority"]) => {
+  const getPriorityStyle = (priority?: string) => {
     switch (priority) {
       case 'Urgent': return { backgroundColor: '#e53935', color: 'white' };
       case 'Important': return { backgroundColor: '#ff9800', color: 'white' };
@@ -39,11 +40,14 @@ function App() {
   const filteredEmails = filter ? emailsState.filter(e => e.priority === filter) : emailsState;
 
   const exportDebriefToCSV = () => {
-    const categories: Email["priority"][] = ['Urgent', 'Important', 'Planifier', 'Info', 'Trash'];
+    const categories = ['Urgent', 'Important', 'Planifier', 'Info', 'Trash', 'NonClassé'];
     const rows = [["Priorité", "Nom de l'expéditeur", "Sujet", "Date"]];
 
     categories.forEach((priority) => {
-      const mails = emailsState.filter((mail) => mail.priority === priority);
+      const mails = emailsState.filter((mail) =>
+        priority === "NonClassé" ? !mail.priority : mail.priority === priority
+      );
+
       mails.forEach((mail) => {
         rows.push([
           priority,
@@ -52,16 +56,6 @@ function App() {
           new Date(mail.date).toLocaleString('fr-FR')
         ]);
       });
-    });
-
-    const nonClassés = emailsState.filter((mail) => !mail.priority);
-    nonClassés.forEach((mail) => {
-      rows.push([
-        'NonClassé',
-        mail.sender.name,
-        mail.subject,
-        new Date(mail.date).toLocaleString('fr-FR')
-      ]);
     });
 
     const csvContent = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
@@ -148,14 +142,62 @@ function App() {
       <hr />
       <h2>📥 Boîte de réception</h2>
       {filteredEmails.map(email => (
-        <div key={email.id} style={{ marginBottom: 15, border: '1px solid #ccc', padding: 10, borderRadius: 4 }}>
+        <div
+          key={email.id}
+          style={{
+            marginBottom: 15,
+            border: '1px solid #ccc',
+            padding: 10,
+            borderRadius: 4,
+            cursor: 'pointer',
+            backgroundColor: selectedEmail?.id === email.id ? '#f5f5f5' : 'white'
+          }}
+          onClick={() => setSelectedEmail(email)}
+        >
           <strong>{email.sender.name}</strong> - {email.subject}<br />
           <small>{new Date(email.date).toLocaleString('fr-FR')}</small><br />
           <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12 }}>
             {email.priority || 'Non classé'}
           </span>
+          <div style={{ marginTop: 10 }}>
+            {['Urgent', 'Important', 'Planifier', 'Info', 'Trash'].map(p => (
+              <button
+                key={p}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEmailsState((prev) =>
+                    prev.map((mail) =>
+                      mail.id === email.id ? { ...mail, priority: p as Email['priority'] } : mail
+                    )
+                  );
+                }}
+                style={{
+                  marginRight: 5,
+                  padding: '4px 10px',
+                  fontSize: '0.8em',
+                  backgroundColor: getPriorityStyle(p).backgroundColor,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer'
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
       ))}
+      {selectedEmail && (
+        <div style={{ marginTop: 30, padding: 15, border: '1px solid #999', borderRadius: 6, backgroundColor: '#fafafa' }}>
+          <h3>Détail du mail</h3>
+          <p><strong>Expéditeur :</strong> {selectedEmail.sender.name} ({selectedEmail.sender.email})</p>
+          <p><strong>Sujet :</strong> {selectedEmail.subject}</p>
+          <p><strong>Date :</strong> {new Date(selectedEmail.date).toLocaleString('fr-FR')}</p>
+          <p><strong>Contenu :</strong></p>
+          <p>{selectedEmail.body}</p>
+        </div>
+      )}
     </div>
   );
 }
