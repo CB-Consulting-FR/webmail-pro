@@ -1,20 +1,7 @@
-// emails.ts
-export interface Sender {
-  name: string;
-  email: string;
-  initials: string;
-}
+// rawEmails.ts
+import { Email } from './emails';
 
-export interface Email {
-  id: string;
-  sender: Sender;
-  subject: string;
-  body: string;
-  date: string;
-  priority?: "Urgent" | "Important" | "Info" | "Trash";
-}
-
-export const rawEmails: Omit<Email, 'date'>[] = [
+const rawEmails: Omit<Email, 'date'>[] = [
   {
     id: "1",
     sender: { name: "Emma Martin", email: "emma@mail.com", initials: "EM" },
@@ -27,5 +14,12 @@ export const rawEmails: Omit<Email, 'date'>[] = [
     subject: "Projet en cours",
     body: "Le projet avance bien, voici les dernières infos..."
   }
-  // Ajoute les autres mails ici, toujours sans date
+  // Ajoute d'autres mails ici
 ];
+
+export function generateEmailsWithDates(): Email[] {
+  return rawEmails.map(email => ({
+    ...email,
+    date: new Date().toISOString() // génère automatiquement la date du jour
+  }));
+}
