@@ -13,12 +13,16 @@ function App() {
   const [filter, setFilter] = useState<string>('');
   const [showDebrief, setShowDebrief] = useState(false);
 
+  const allMailsClassified = emailsState.every((email) => !!email.priority);
+
   const resetPriorities = () => {
     setEmailsState(generateEmailsWithDates());
     setSelectedEmail(null);
     setShowDebrief(false);
     setFilter('');
   };
+
+  const handleDebrief = () => setShowDebrief(true);
 
   const getPriorityStyle = (priority?: string) => {
     switch (priority) {
@@ -108,63 +112,78 @@ function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      {/* Colonne gauche : filtres */}
-      <div style={{ width: '200px', borderRight: '1px solid #ccc', padding: '20px' }}>
-        <h3>📂 Filtres</h3>
-        {['Urgent', 'Important', 'Planifier', 'Info', 'Trash', ''].map(p => (
+      {/* Sidebar Gauche */}
+      <div style={{ width: '220px', borderRight: '1px solid #ccc', padding: '20px' }}>
+        <h3>Filtres</h3>
+        {['', 'Urgent', 'Important', 'Planifier', 'Info', 'Trash'].map(p => (
           <div key={p}>
-            <button onClick={() => setFilter(p)} style={{ margin: '5px 0', width: '100%' }}>
-              {p || 'Tous les mails'}
+            <button
+              onClick={() => setFilter(p)}
+              style={{ marginBottom: 8, width: '100%', backgroundColor: filter === p ? '#1976d2' : '#f0f0f0', color: filter === p ? 'white' : '#000', border: 'none', padding: 8, borderRadius: 4 }}
+            >
+              {p || 'Tous'}
             </button>
           </div>
         ))}
         <hr />
         <button onClick={resetPriorities} style={{ width: '100%' }}>♻️ Réinitialiser</button>
-        <button onClick={() => setShowDebrief(true)} style={{ width: '100%', marginTop: 10 }}>📊 Débrief</button>
-        <button onClick={exportDebriefToCSV} style={{ width: '100%', marginTop: 10 }}>📄 Export CSV</button>
+        <button onClick={handleDebrief} style={{ marginTop: 10, width: '100%' }}>📊 Débrief</button>
+        <button onClick={exportDebriefToCSV} style={{ marginTop: 10, width: '100%' }}>📄 Export CSV</button>
       </div>
 
-      {/* Colonne centre : liste des mails */}
-      <div style={{ width: '300px', overflowY: 'auto', padding: '20px' }}>
-        <h2>📥 Mails</h2>
+      {/* Liste des mails */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <h2>📥 Boîte de réception</h2>
         {filteredEmails.map(email => (
-          <div key={email.id} onClick={() => setSelectedEmail(email)} style={{ marginBottom: 10, border: '1px solid #ccc', padding: 10, borderRadius: 4, cursor: 'pointer' }}>
-            <strong>{email.sender.name}</strong><br />
-            <span>{email.subject}</span><br />
+          <div
+            key={email.id}
+            onClick={() => setSelectedEmail(email)}
+            style={{
+              marginBottom: 15,
+              padding: 10,
+              borderRadius: 6,
+              backgroundColor: selectedEmail?.id === email.id ? '#e3f2fd' : '#f9f9f9',
+              border: '1px solid #ccc',
+              cursor: 'pointer'
+            }}
+          >
+            <strong>{email.sender.name}</strong> - {email.subject}<br />
             <small>{new Date(email.date).toLocaleString('fr-FR')}</small><br />
             <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12 }}>{email.priority || 'Non classé'}</span>
           </div>
         ))}
       </div>
 
-      {/* Colonne droite : contenu sélectionné */}
-      <div style={{ flex: 1, padding: '20px', backgroundColor: '#f9f9f9' }}>
+      {/* Affichage du mail sélectionné */}
+      <div style={{ width: '33%', borderLeft: '1px solid #ccc', padding: 20 }}>
         {selectedEmail ? (
-          <div>
+          <>
             <h2>{selectedEmail.subject}</h2>
-            <p><strong>Expéditeur :</strong> {selectedEmail.sender.name} ({selectedEmail.sender.email})</p>
+            <p><strong>De :</strong> {selectedEmail.sender.name} ({selectedEmail.sender.email})</p>
             <p><strong>Date :</strong> {new Date(selectedEmail.date).toLocaleString('fr-FR')}</p>
+            <hr />
             <p>{selectedEmail.body}</p>
-            <div style={{ marginTop: 20 }}>
-              {['Urgent', 'Important', 'Planifier', 'Info', 'Trash'].map(p => (
-                <button
-                  key={p}
-                  onClick={() => {
-                    setEmailsState(prev =>
-                      prev.map(mail =>
-                        mail.id === selectedEmail.id ? { ...mail, priority: p } : mail
-                      )
-                    );
-                  }}
-                  style={{ marginRight: 10, ...getPriorityStyle(p), padding: '6px 12px', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
+            <hr />
+            <h4>Attribuer une priorité :</h4>
+            {['Urgent', 'Important', 'Planifier', 'Info', 'Trash'].map(p => (
+              <button
+                key={p}
+                onClick={() => {
+                  setEmailsState(prev =>
+                    prev.map(e =>
+                      e.id === selectedEmail.id ? { ...e, priority: p } : e
+                    )
+                  );
+                  setSelectedEmail(null);
+                }}
+                style={{ marginRight: 8 }}
+              >
+                {p}
+              </button>
+            ))}
+          </>
         ) : (
-          <p style={{ color: '#888' }}>📭 Sélectionnez un mail pour le lire ici</p>
+          <p s>📬 Cliquez sur un mail pour le consulter</p>
         )}
       </div>
     </div>
