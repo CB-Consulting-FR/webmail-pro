@@ -35,7 +35,7 @@ function App() {
     setEmailsState(prev =>
       prev
         .map(mail => mail.id === id ? { ...mail, priority } : mail)
-        .sort((a, b) => (a.priority ? 1 : 0) - (b.priority ? 1 : 0)) // Non classés en haut
+        .sort((a, b) => (a.priority ? 1 : 0) - (b.priority ? 1 : 0))
     );
   };
 
@@ -65,7 +65,6 @@ function App() {
 
   const filteredEmails = filter ? emailsState.filter(e => e.priority === filter) : emailsState;
 
-  // ÉTAPE 1 : Page de code d'accès
   if (!isAuthenticated) {
     return (
       <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
@@ -93,7 +92,6 @@ function App() {
     );
   }
 
-  // ÉTAPE 2 : Page d’intro
   if (showIntro) {
     return (
       <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
@@ -113,7 +111,6 @@ function App() {
     );
   }
 
-  // ÉTAPE 3 : Interface principale avec affichage 2 colonnes
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h1>📨 WebMail Pro</h1>
@@ -142,8 +139,9 @@ function App() {
         </div>
       )}
 
-      {/* Layout à deux colonnes */}
+      {/* Layout 2 colonnes */}
       <div style={{ display: 'flex', gap: '20px' }}>
+        {/* Colonne gauche : liste des mails */}
         <div style={{ flex: 1 }}>
           <h2>📥 Boîte de réception</h2>
           {filteredEmails.map(email => (
@@ -161,7 +159,7 @@ function App() {
             >
               <strong>{email.sender.name}</strong> - {email.subject}<br />
               <small>{new Date(email.date).toLocaleString('fr-FR')}</small><br />
-              <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12 }}>
+              <span style={{ ...getPriorityStyle(email.priority), padding: '2px 8px', borderRadius: 12, display: 'inline-block', marginTop: 4 }}>
                 {email.priority || 'Non classé'}
               </span>
               <div style={{ marginTop: 10 }}>
@@ -178,6 +176,8 @@ function App() {
                       fontSize: '0.9em',
                       borderRadius: 4,
                       border: '1px solid #ccc',
+                      backgroundColor: getPriorityStyle(p).backgroundColor,
+                      color: getPriorityStyle(p).color,
                       cursor: 'pointer'
                     }}
                   >
@@ -189,7 +189,7 @@ function App() {
           ))}
         </div>
 
-        {/* Affichage à droite du contenu du mail */}
+        {/* Colonne droite : contenu du mail */}
         <div style={{ flex: 1, borderLeft: '1px solid #ccc', paddingLeft: 20 }}>
           {selectedEmail ? (
             <div>
